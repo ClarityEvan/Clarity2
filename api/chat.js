@@ -4,15 +4,22 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') { res.status(200).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) { res.status(500).json({ error: 'API key not configured on server.' }); return; }
+
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const elevenKey = process.env.ELEVENLABS_API_KEY;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID;
+
+  if (!anthropicKey) { res.status(500).json({ error: 'API key not configured on server.' }); return; }
+
   try {
     const { messages, system } = req.body;
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+
+    // Call Claude
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': key,
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -22,9 +29,46 @@ module.exports = async function handler(req, res) {
         messages
       })
     });
-    const data = await response.json();
-    if (!response.ok) { res.status(response.status).json({ error: data.error?.message || 'API error' }); return; }
-    res.status(200).json({ text: data.content?.[0]?.text || '' });
+    const claudeData = await claudeRes.json();
+    if (!claudeRes.ok) { res.status(claudeRes.status).json({ error: claudeData.error?.message || 'Claude API error' }); return; }
+
+    const text = claudeData.content?.[0]?.text || '';
+
+    // If ElevenLabs is configured, generate audio
+    let audioBase64 = null;
+    if (elevenKey && voiceId) {
+      // Strip insight/report blocks from spoken text
+      const speakText = text
+        .replace(/INSIGHT:\{[^}\n]+\}/g, '')
+        .replace(/REPORT:\{[\s\S]+\}$/m, '')
+        .replace(/\*\*/g, '')
+        .trim();
+
+      if (speakText.length > 0 && speakText.length < 3000) {
+        try {
+          const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'xi-api-key': elevenKey
+            },
+            body: JSON.stringify({
+              text: speakText,
+              model_id: 'eleven_turbo_v2',
+              voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+            })
+          });
+          if (elevenRes.ok) {
+            const audioBuffer = await elevenRes.arrayBuffer();
+            audioBase64 = Buffer.from(audioBuffer).toString('base64');
+          }
+        } catch(e) {
+          // Audio failed but text is fine - continue without audio
+        }
+      }
+    }
+
+    res.status(200).json({ text, audioBase64 });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
