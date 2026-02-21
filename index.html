@@ -47,24 +47,10 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
   border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;
 }
 .chat-logo{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:5px;text-transform:uppercase;}
-.hdr-right{display:flex;align-items:center;gap:10px;}
 .phase-pill{
   font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);
   background:rgba(196,163,90,0.1);padding:4px 10px;border-radius:20px;border:1px solid var(--gold-light);
 }
-.voice-pill{
-  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--muted);
-  background:var(--white);
-  padding:4px 10px;border-radius:20px;border:1px solid var(--border);
-  cursor:pointer;
-}
-.voice-pill.on{
-  color:var(--gold);
-  border-color:var(--gold-light);
-  background:rgba(196,163,90,0.08);
-}
-
 .msgs{
   flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:22px 18px 10px;display:flex;flex-direction:column;gap:16px;
@@ -76,16 +62,6 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 .bubble{max-width:90%;padding:13px 16px;border-radius:8px;line-height:1.78;font-size:15px;}
 .msg.ai .bubble{background:var(--white);border:1px solid var(--border);}
 .msg.usr .bubble{background:var(--dark);color:var(--cream);}
-
-.hear-btn{
-  background:none;border:none;
-  font-size:18px;cursor:pointer;
-  padding:4px 0;opacity:0.72;
-  display:inline-flex;gap:8px;align-items:center;
-}
-.hear-btn:hover{opacity:0.95;}
-.hear-btn span{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
-
 .typing-wrap{display:flex;flex-direction:column;gap:4px;align-items:flex-start;animation:up 0.3s ease forwards;opacity:0;}
 .typing{display:flex;gap:5px;padding:14px 16px;background:var(--white);border:1px solid var(--border);border-radius:8px;}
 .dot{width:7px;height:7px;background:var(--gold-light);border-radius:50%;animation:bounce 1.3s infinite;}
@@ -181,10 +157,7 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 <div id="chat" class="screen">
   <div class="chat-hdr">
     <div class="chat-logo">Clarity</div>
-    <div class="hdr-right">
-      <button class="voice-pill on" id="voice-pill" onclick="toggleVoice()">Voice On</button>
-      <div class="phase-pill" id="phase-pill">Getting Started</div>
-    </div>
+    <div class="phase-pill" id="phase-pill">Getting Started</div>
   </div>
   <div class="msgs" id="msgs"></div>
   <div class="input-bar">
@@ -218,11 +191,6 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 <script>
 let history = [], profile = {}, waiting = false, recog = null, listening = false;
 
-/** Voice config */
-let AUTO_SPEAK = true;
-let VOICE = null;          // chosen SpeechSynthesisVoice
-let VOICES_READY = false;
-
 const SYSTEM = `You are Clarity, a warm and highly knowledgeable personal financial advisor AI. Conduct a comprehensive but conversational financial review. Speak like a trusted, brilliant friend — never like a form or a robot.
 
 Work through these phases naturally, asking 1-2 questions at a time, adapting based on answers:
@@ -249,29 +217,9 @@ REPORT:{"assessment":"3 honest paragraphs","projection":"2 paragraph retirement 
 
 TONE: Warm, direct, specific. Flag issues gently. Acknowledge when things look good. Keep responses focused.`;
 
-// ---------- Safe formatting (prevents HTML injection) ----------
-function escapeHTML(str) {
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function fmt(t) {
-  const safe = escapeHTML(t);
-  return safe
-    .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
-    .replace(/\n\n/g,'<br><br>')
-    .replace(/\n/g,'<br>');
-}
-
-// ---------- Screen navigation ----------
 function launch() {
   show('chat');
   initSpeech();
-  initVoices();     // ensure voices are loaded early
   begin();
 }
 
@@ -280,16 +228,6 @@ function show(id) {
   document.getElementById(id).classList.add('active');
 }
 
-// ---------- Voice toggle ----------
-function toggleVoice() {
-  AUTO_SPEAK = !AUTO_SPEAK;
-  const pill = document.getElementById('voice-pill');
-  pill.classList.toggle('on', AUTO_SPEAK);
-  pill.textContent = AUTO_SPEAK ? "Voice On" : "Voice Off";
-  if (!AUTO_SPEAK && window.speechSynthesis) window.speechSynthesis.cancel();
-}
-
-// ---------- Chat flow ----------
 async function begin() {
   history.push({ role:'user', content:'Hello, I would like a comprehensive review of my financial situation and a personalized report.' });
   showTyping();
@@ -323,16 +261,33 @@ async function ask(msgs) {
       body: JSON.stringify({ messages: msgs, system: SYSTEM })
     });
     if (!res.ok) {
-      const e = await res.json().catch(()=>({}));
+      const e = await res.json();
       addMsg('ai', '⚠️ Error: ' + (e.error || 'Something went wrong. Please try again.'));
       return null;
     }
     const d = await res.json();
+    if (d.audioBase64) {
+      playAudio(d.audioBase64);
+    }
     return d.text || null;
   } catch(e) {
     addMsg('ai', '⚠️ Connection error: ' + e.message);
     return null;
   }
+}
+
+function playAudio(base64) {
+  try {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play().catch(() => {
+      // Auto-play blocked - user needs to tap 🔊 button
+    });
+  } catch(e) {}
 }
 
 function handle(raw) {
@@ -343,59 +298,40 @@ function handle(raw) {
   let reportData = null;
   if (rm) { try { reportData = JSON.parse(rm[1]); } catch(e){} }
 
-  let text = raw
-    .replace(/INSIGHT:\{[^}\n]+\}/g,'')
-    .replace(/REPORT:\{[\s\S]+\}$/m,'')
-    .trim();
-
+  let text = raw.replace(/INSIGHT:\{[^}\n]+\}/g,'').replace(/REPORT:\{[\s\S]+\}$/m,'').trim();
   if (text) {
     addMsg('ai', text);
     history.push({ role:'assistant', content:text });
-    if (AUTO_SPEAK) speak(text);
+    speak(text);
   }
 
   if (profile.phase) document.getElementById('phase-pill').textContent = profile.phase;
-  if (reportData) setTimeout(() => buildReport(reportData), 700);
-}
-
-// ---------- Message rendering ----------
-const msgStore = new Map(); // id -> text
-
-function newId() {
-  return (crypto && crypto.randomUUID) ? crypto.randomUUID() : ('msg-' + Date.now() + '-' + Math.random().toString(16).slice(2));
+  if (reportData) setTimeout(() => buildReport(reportData), 1500);
 }
 
 function addMsg(role, text) {
   const area = document.getElementById('msgs');
-
   const m = document.createElement('div');
   m.className = 'msg ' + role;
-
-  const lbl = document.createElement('div');
-  lbl.className = 'msg-lbl';
-  lbl.textContent = (role === 'ai') ? 'Clarity' : 'You';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = fmt(text);
-
-  m.appendChild(lbl);
-  m.appendChild(bubble);
-
-  if (role === 'ai') {
-    const id = newId();
-    msgStore.set(id, text);
-
-    const btn = document.createElement('button');
-    btn.className = 'hear-btn';
-    btn.type = 'button';
-    btn.innerHTML = `🔊 <span>Tap to hear</span>`;
-    btn.addEventListener('click', () => speakMsg(id));
-    m.appendChild(btn);
-  }
-
+  const id = 'msg-' + Date.now();
+  m.innerHTML = `<div class="msg-lbl">${role==='ai'?'Clarity':'You'}</div><div class="bubble">${fmt(text)}</div>${role==='ai'?`<button onclick="speakMsg('${id}')" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;opacity:0.7;display:block;margin-top:4px;">🔊 Tap to hear</button>`:''}`;
+  if(role==='ai') window['msg_'+id] = text;
   area.appendChild(m);
   setTimeout(() => area.scrollTop = area.scrollHeight, 50);
+}
+
+function speakMsg(id) {
+  const text = window['msg_' + id];
+  if (!text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\*\*/g,'').replace(/INSIGHT:[^
+]*/g,'').trim());
+  u.rate = 0.92;
+  window.speechSynthesis.speak(u);
+}
+
+function fmt(t) {
+  return t.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
 }
 
 function showTyping() {
@@ -409,7 +345,6 @@ function showTyping() {
 function hideTyping() { const t = document.getElementById('typing'); if(t) t.remove(); }
 function grow(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
 
-// ---------- Speech recognition (mic) ----------
 function initSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
@@ -419,148 +354,53 @@ function initSpeech() {
   }
   recog = new SR();
   recog.continuous = false; recog.interimResults = true; recog.lang = 'en-US';
-  recog.onstart = () => {
-    listening=true;
-    document.getElementById('mic-btn').classList.add('on');
-    document.getElementById('voice-hint').textContent='Listening… speak now';
-  };
-  recog.onresult = (e) => {
-    document.getElementById('txt-input').value = Array.from(e.results).map(r=>r[0].transcript).join('');
-  };
-  recog.onend = () => {
-    listening=false;
-    document.getElementById('mic-btn').classList.remove('on');
-    document.getElementById('voice-hint').textContent='Tap the microphone to speak';
-    const v=document.getElementById('txt-input').value.trim();
-    if(v) send();
-  };
-  recog.onerror = () => {
-    listening=false;
-    document.getElementById('mic-btn').classList.remove('on');
-  };
+  recog.onstart = () => { listening=true; document.getElementById('mic-btn').classList.add('on'); document.getElementById('voice-hint').textContent='Listening… speak now'; };
+  recog.onresult = (e) => { document.getElementById('txt-input').value = Array.from(e.results).map(r=>r[0].transcript).join(''); };
+  recog.onend = () => { listening=false; document.getElementById('mic-btn').classList.remove('on'); document.getElementById('voice-hint').textContent='Tap the microphone to speak'; const v=document.getElementById('txt-input').value.trim(); if(v) send(); };
+  recog.onerror = () => { listening=false; document.getElementById('mic-btn').classList.remove('on'); };
 }
 
 function toggleMic() {
   if (!recog) return;
-  if (listening) recog.stop();
-  else { document.getElementById('txt-input').value=''; recog.start(); }
-}
-
-// ---------- Speech synthesis (talkback) ----------
-function initVoices() {
-  if (!window.speechSynthesis) return;
-
-  const load = () => {
-    const voices = window.speechSynthesis.getVoices() || [];
-    if (!voices.length) return;
-
-    VOICES_READY = true;
-    VOICE = pickOxfordVoice(voices);
-  };
-
-  load();
-  window.speechSynthesis.onvoiceschanged = load;
-
-  // Nudge voice availability on first interaction (Safari/iOS quirks)
-  document.addEventListener('click', () => {
-    try { window.speechSynthesis.getVoices(); } catch(e) {}
-  }, { once: true });
-}
-
-function pickOxfordVoice(voices) {
-  // Prefer UK English voices, and “professor-ish” male voices if present.
-  const byLang = (re) => voices.filter(v => re.test(v.lang || ""));
-  const enGB = byLang(/^en-GB/i);
-
-  const namePref = [
-    /daniel/i, /oliver/i, /george/i, /harry/i, /arthur/i, /edward/i, /alex/i
-  ];
-
-  const pickFrom = (list) => {
-    for (const rx of namePref) {
-      const v = list.find(v => rx.test(v.name || ""));
-      if (v) return v;
-    }
-    return list[0] || null;
-  };
-
-  return pickFrom(enGB) || pickFrom(byLang(/^en-IE/i)) || pickFrom(byLang(/^en/i)) || voices[0] || null;
-}
-
-function cleanForSpeech(text) {
-  return String(text || "")
-    .replace(/\*\*/g,'')
-    .replace(/INSIGHT:[^\n]+/g,'') // <-- fixed: single-line safe regex
-    .trim();
+  if (listening) recog.stop(); else { document.getElementById('txt-input').value=''; recog.start(); }
 }
 
 function speak(text) {
   if (!window.speechSynthesis) return;
-  const clean = cleanForSpeech(text);
-  if (!clean) return;
-
-  // Don’t hard-cut at 300 chars; speak a reasonable chunk.
-  const chunk = clean.length > 900 ? clean.slice(0, 900) + "…" : clean;
-
+  const clean = text.replace(/\*\*/g,'').replace(/INSIGHT:[^\n]+/g,'').trim();
+  if (clean.length > 300) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(chunk);
-
-  // Apply the “Oxford-ish” voice if available
-  if (VOICES_READY && VOICE) u.voice = VOICE;
-
-  // Professor-ish tuning
-  u.rate = 0.92;
-  u.pitch = 0.95;
-
+  const u = new SpeechSynthesisUtterance(clean);
+  u.rate = 0.95;
   window.speechSynthesis.speak(u);
 }
 
-function speakMsg(id) {
-  const text = msgStore.get(id);
-  if (!text) return;
-  speak(text);
-}
-
-// ---------- Report ----------
 function buildReport(data) {
-  const fmt$ = v => {
-    if(!v) return '—';
-    const n=parseFloat(String(v).replace(/[^0-9.]/g,''));
-    if(isNaN(n)) return escapeHTML(String(v));
-    if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M';
-    if(n>=1000) return '$'+Math.round(n/1000)+'K';
-    return '$'+n.toLocaleString();
-  };
+  const fmt$ = v => { if(!v) return '—'; const n=parseFloat(String(v).replace(/[^0-9.]/g,'')); if(isNaN(n)) return String(v); if(n>=1e6) return '$'+(n/1e6).toFixed(1)+'M'; if(n>=1000) return '$'+Math.round(n/1000)+'K'; return '$'+n.toLocaleString(); };
   const toN = v => parseFloat(String(v||0).replace(/[^0-9.]/g,''))||0;
   const p = profile;
   const nw = toN(p.retirementBalance)+toN(p.homeValue)+toN(p.savingsBalance)-toN(p.mortgageBalance)-toN(p.totalDebt);
 
-  const safeBlock = (s) => escapeHTML(s || "").replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
-
   let html = `<div class="rep-section"><div class="rep-section-lbl">Financial Snapshot</div><div class="metrics-grid">
-    <div class="metric hi"><div class="metric-lbl">Household Income</div><div class="metric-val">${fmt$(p.totalHousehold||p.annualIncome)}</div><div class="metric-note">${escapeHTML(p.state||'Annual')}</div></div>
-    <div class="metric hi"><div class="metric-lbl">Retirement Savings</div><div class="metric-val">${fmt$(p.retirementBalance)}</div><div class="metric-note">${p.retirementSavingsRate?escapeHTML('Saving '+p.retirementSavingsRate+'%'):'All accounts'}</div></div>
+    <div class="metric hi"><div class="metric-lbl">Household Income</div><div class="metric-val">${fmt$(p.totalHousehold||p.annualIncome)}</div><div class="metric-note">${p.state||'Annual'}</div></div>
+    <div class="metric hi"><div class="metric-lbl">Retirement Savings</div><div class="metric-val">${fmt$(p.retirementBalance)}</div><div class="metric-note">${p.retirementSavingsRate?'Saving '+p.retirementSavingsRate+'%':'All accounts'}</div></div>
     <div class="metric good"><div class="metric-lbl">Est. Net Worth</div><div class="metric-val">${nw>0?fmt$(nw):'—'}</div><div class="metric-note">Assets minus debts</div></div>
-    <div class="metric"><div class="metric-lbl">Years to Retire</div><div class="metric-val">${escapeHTML(p.yearsToRetirement||'—')}</div><div class="metric-note">${p.retirementAge?escapeHTML('Target age '+p.retirementAge):''}</div></div>
+    <div class="metric"><div class="metric-lbl">Years to Retire</div><div class="metric-val">${p.yearsToRetirement||'—'}</div><div class="metric-note">${p.retirementAge?'Target age '+p.retirementAge:''}</div></div>
     <div class="metric ${toN(p.totalDebt)>20000?'warn':'good'}"><div class="metric-lbl">Non-Mortgage Debt</div><div class="metric-val">${fmt$(p.totalDebt)||'$0'}</div><div class="metric-note">Loans, cards, other</div></div>
-    <div class="metric"><div class="metric-lbl">Liquid Savings</div><div class="metric-val">${fmt$(p.savingsBalance)}</div><div class="metric-note">${p.emergencyFundMonths?escapeHTML(p.emergencyFundMonths+' months'):''}</div></div>
+    <div class="metric"><div class="metric-lbl">Liquid Savings</div><div class="metric-val">${fmt$(p.savingsBalance)}</div><div class="metric-note">${p.emergencyFundMonths?p.emergencyFundMonths+' months':''}</div></div>
   </div></div>`;
 
-  if (data.assessment) html += `<div class="rep-section"><div class="rep-section-lbl">Overall Assessment</div><div class="rep-text"><p>${safeBlock(data.assessment)}</p></div></div>`;
-  if (data.projection) html += `<div class="rep-section"><div class="rep-section-lbl">Retirement Projection</div><div class="rep-text"><p>${safeBlock(data.projection)}</p></div></div>`;
+  if (data.assessment) html += `<div class="rep-section"><div class="rep-section-lbl">Overall Assessment</div><div class="rep-text"><p>${data.assessment.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p></div></div>`;
+  if (data.projection) html += `<div class="rep-section"><div class="rep-section-lbl">Retirement Projection</div><div class="rep-text"><p>${data.projection.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</p></div></div>`;
 
   if (data.opportunities?.length) {
     html += `<div class="rep-section"><div class="rep-section-lbl">Your Top Opportunities</div><div class="rep-items">`;
-    data.opportunities.forEach(o => {
-      html += `<div class="rep-item"><div class="rep-icon">${escapeHTML(o.icon||'💡')}</div><div><div class="rep-item-title">${escapeHTML(o.title||'')}</div><div class="rep-item-desc">${escapeHTML(o.desc||'')}</div></div></div>`;
-    });
+    data.opportunities.forEach(o => { html += `<div class="rep-item"><div class="rep-icon">${o.icon||'💡'}</div><div><div class="rep-item-title">${o.title}</div><div class="rep-item-desc">${o.desc}</div></div></div>`; });
     html += `</div></div>`;
   }
   if (data.gaps?.length) {
     html += `<div class="rep-section"><div class="rep-section-lbl">Risk Gaps to Address</div><div class="rep-items">`;
-    data.gaps.forEach(g => {
-      html += `<div class="rep-item"><div class="rep-icon">${escapeHTML(g.icon||'⚠️')}</div><div><div class="rep-item-title">${escapeHTML(g.title||'')}</div><div class="rep-item-desc">${escapeHTML(g.desc||'')}</div></div></div>`;
-    });
+    data.gaps.forEach(g => { html += `<div class="rep-item"><div class="rep-icon">${g.icon||'⚠️'}</div><div><div class="rep-item-title">${g.title}</div><div class="rep-item-desc">${g.desc}</div></div></div>`; });
     html += `</div></div>`;
   }
 
@@ -568,9 +408,6 @@ function buildReport(data) {
   document.getElementById('rep-body').innerHTML = html;
   show('report');
 }
-
-// Boot voice init early
-initVoices();
 </script>
 </body>
 </html>
