@@ -12,14 +12,14 @@ html,body{height:100%;overflow:hidden;}
 body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;color:var(--dark);}
 .screen{display:none;height:100dvh;flex-direction:column;overflow:hidden;}
 .screen.active{display:flex;}
-#setup{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:56px 28px 48px;background:var(--cream);}
-.wordmark{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;letter-spacing:9px;text-transform:uppercase;margin-bottom:5px;}
-.tagline{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:48px;}
+#setup{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 28px 32px;background:var(--cream);}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;letter-spacing:9px;text-transform:uppercase;margin-bottom:4px;}
+.tagline{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:28px;}
 .s-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:10px;}
 .s-body{font-size:14px;line-height:1.82;color:var(--muted);margin-bottom:24px;}
 .go-btn{display:block;width:100%;padding:18px;margin-top:8px;background:var(--dark);color:var(--cream);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;transition:opacity 0.15s;}
 .go-btn:active{opacity:0.8;}
-.divider{border:none;border-top:1px solid var(--border);margin:36px 0;}
+.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
 .what-lbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
 .steps{display:flex;flex-direction:column;gap:14px;}
 .step{display:flex;gap:14px;}
@@ -134,7 +134,7 @@ var recog = null;
 var listening = false;
 var msgStore = {};
 
-var SYSTEM = "You are Clarity, a warm and highly knowledgeable personal financial advisor AI. Conduct a comprehensive but conversational financial review. Speak like a trusted, brilliant friend.\n\nWork through these phases naturally, asking 1-2 questions at a time:\n\nPHASE 1 - ORIENTATION: Warm greeting. Ask one open question to learn age, marital status, employment, and general financial stage.\n\nPHASE 2 - INCOME AND TAXES: Total compensation, bonus, equity, spouse income. Filing status and state.\n\nPHASE 3 - RETIREMENT ACCOUNTS: 401k/403b and employer match, contribution level, Roth vs traditional, IRA, total retirement balance.\n\nPHASE 4 - ASSETS AND DEBT: Home value and mortgage, investment accounts, savings, emergency fund, major debts.\n\nPHASE 5 - PROTECTION AND DEPENDENTS: Life and disability insurance, kids and college savings.\n\nPHASE 6 - GOALS: Target retirement age, Social Security timing, major expenses, estate planning.\n\nAfter every response where you learn a financial fact, append on its own line: INSIGHT:{\"key\":\"value\"}\n\nKeys to use: age, maritalStatus, state, annualIncome, spouseIncome, totalHousehold, retirementBalance, homeValue, mortgageBalance, savingsBalance, totalDebt, retirementSavingsRate, retirementAge, yearsToRetirement, emergencyFundMonths, phase\n\nWhen you have enough info, say you are generating the report then output on its own line: REPORT:{\"assessment\":\"3 honest paragraphs\",\"projection\":\"2 paragraph retirement outlook\",\"opportunities\":[{\"icon\":\"emoji\",\"title\":\"...\",\"desc\":\"...\"}],\"gaps\":[{\"icon\":\"emoji\",\"title\":\"...\",\"desc\":\"...\"}]}\n\nTONE: Warm, direct, specific. Flag issues gently. Keep responses focused.";
+var SYSTEM = "You are Clarity, a warm and highly knowledgeable personal financial advisor AI. Conduct a comprehensive but conversational financial review. Speak like a trusted, brilliant friend.\n\nWork through these phases naturally, asking 1-2 questions at a time:\n\nPHASE 1 - ORIENTATION: Warm greeting. Ask one open question to learn age, marital status, employment, and general financial stage.\n\nPHASE 2 - INCOME AND TAXES: Total compensation, bonus, equity, spouse income. Filing status and state.\n\nPHASE 3 - RETIREMENT ACCOUNTS: 401k/403b and employer match, contribution level, Roth vs traditional, IRA, total retirement balance.\n\nPHASE 4 - ASSETS AND DEBT: Home value and mortgage, investment accounts, savings, emergency fund, major debts.\n\nPHASE 5 - PROTECTION AND DEPENDENTS: Life and disability insurance, kids and college savings.\n\nPHASE 6 - GOALS: Target retirement age, Social Security timing, major expenses, estate planning.\n\nAfter every response where you learn a financial fact, append on its own line: INSIGHT:{\"key\":\"value\"}\n\nKeys to use: age, maritalStatus, state, annualIncome, spouseIncome, totalHousehold, retirementBalance, homeValue, mortgageBalance, savingsBalance, totalDebt, retirementSavingsRate, retirementAge, yearsToRetirement, emergencyFundMonths, phase\n\nWhen you have enough info, say you are generating the report then output on its own line: REPORT:{\"assessment\":\"3 honest paragraphs\",\"projection\":\"2 paragraph retirement outlook\",\"opportunities\":[{\"icon\":\"emoji\",\"title\":\"...\",\"desc\":\"...\"}],\"gaps\":[{\"icon\":\"emoji\",\"title\":\"...\",\"desc\":\"...\"}]}\n\nTONE: Warm, direct, specific. Flag issues gently. Keep responses focused. Never use markdown headers (no # symbols). Use plain conversational text only.";
 
 function launch() {
   show('chat');
