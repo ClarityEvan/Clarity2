@@ -296,9 +296,21 @@ function addMsg(role, text) {
   const area = document.getElementById('msgs');
   const m = document.createElement('div');
   m.className = 'msg ' + role;
-  m.innerHTML = `<div class="msg-lbl">${role==='ai'?'Clarity':'You'}</div><div class="bubble">${fmt(text)}</div>`;
+  const id = 'msg-' + Date.now();
+  m.innerHTML = `<div class="msg-lbl">${role==='ai'?'Clarity':'You'}</div><div class="bubble">${fmt(text)}</div>${role==='ai'?`<button onclick="speakMsg('${id}')" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;opacity:0.7;display:block;margin-top:4px;">🔊 Tap to hear</button>`:''}`;
+  if(role==='ai') window['msg_'+id] = text;
   area.appendChild(m);
   setTimeout(() => area.scrollTop = area.scrollHeight, 50);
+}
+
+function speakMsg(id) {
+  const text = window['msg_' + id];
+  if (!text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/\*\*/g,'').replace(/INSIGHT:[^
+]*/g,'').trim());
+  u.rate = 0.92;
+  window.speechSynthesis.speak(u);
 }
 
 function fmt(t) {
@@ -339,7 +351,7 @@ function toggleMic() {
 function speak(text) {
   if (!window.speechSynthesis) return;
   const clean = text.replace(/\*\*/g,'').replace(/INSIGHT:[^\n]*/g,'').trim();
-  if (clean.length > 2000) return;
+  if (clean.length > 300) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(clean);
   u.rate = 0.95;
