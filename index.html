@@ -5,275 +5,202 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Voice Chat</title>
   <style>
-    :root {
-      --bg: #0b0f14;
-      --panel: #101826;
-      --panel2: #0f1724;
-      --text: #e6edf3;
-      --muted: #9aa8b2;
-      --border: rgba(255,255,255,0.10);
-      --accent: #3b82f6;
-      --danger: #ef4444;
-      --good: #22c55e;
-      --shadow: 0 18px 60px rgba(0,0,0,0.45);
-      --radius: 16px;
+    :root{
+      --bg:#0b0f14; --panel:#101826; --panel2:#0f1724;
+      --text:#e6edf3; --muted:#9aa8b2; --border:rgba(255,255,255,.12);
+      --accent:#3b82f6; --good:#22c55e; --danger:#ef4444;
+      --shadow:0 18px 60px rgba(0,0,0,.45); --radius:16px;
     }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       background: radial-gradient(1200px 800px at 20% 10%, #13223a, transparent 70%),
                   radial-gradient(1000px 700px at 80% 30%, #1a2744, transparent 70%),
                   var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
     }
-
-    .app {
-      width: min(980px, 100%);
-      height: min(88vh, 820px);
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: 12px;
-      background: rgba(16,24,38,0.65);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+    .app{
+      width:min(980px,100%);
+      height:min(88vh,860px);
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      gap:12px;
+      background:rgba(16,24,38,.65);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
       backdrop-filter: blur(10px);
-      overflow: hidden;
+      overflow:hidden;
     }
-
-    header {
-      padding: 14px 14px 10px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(to bottom, rgba(0,0,0,0.18), transparent);
+    header{
+      padding:14px 14px 10px;
+      display:flex; gap:12px;
+      align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(to bottom, rgba(0,0,0,.18), transparent);
     }
-    header .left { display: flex; flex-direction: column; gap: 4px; }
-    header h1 {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: 0.2px;
-      font-weight: 700;
+    header h1{margin:0; font-size:16px; font-weight:750; letter-spacing:.2px}
+    header .sub{font-size:12px; color:var(--muted)}
+    header .left{display:flex; flex-direction:column; gap:4px}
+    header .right{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(15,23,36,.7);
+      color:var(--text);
+      font-size:12px;
     }
-    header .sub {
-      font-size: 12px;
-      color: var(--muted);
+    .dot{
+      width:8px; height:8px; border-radius:999px;
+      background:var(--danger);
+      box-shadow:0 0 0 4px rgba(239,68,68,.15);
     }
-    header .right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+    .dot.on{
+      background:var(--good);
+      box-shadow:0 0 0 4px rgba(34,197,94,.15);
     }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 36, 0.7);
-      color: var(--text);
-      font-size: 12px;
+    main{overflow:auto; padding:14px; scroll-behavior:smooth;}
+    .chat{display:flex; flex-direction:column; gap:10px;}
+    .msg{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start;}
+    .avatar{
+      width:34px; height:34px; border-radius:999px;
+      display:grid; place-items:center;
+      font-size:12px; font-weight:800;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      user-select:none;
     }
-    .dot {
-      width: 8px; height: 8px; border-radius: 999px;
-      background: var(--danger);
-      box-shadow: 0 0 0 4px rgba(239,68,68,0.15);
+    .bubble{
+      border:1px solid var(--border);
+      background:rgba(15,23,36,.65);
+      border-radius:14px;
+      padding:10px 12px;
+      line-height:1.35;
+      font-size:14px;
+      white-space:normal;
+      overflow-wrap:anywhere;
     }
-    .dot.on {
-      background: var(--good);
-      box-shadow: 0 0 0 4px rgba(34,197,94,0.15);
+    .msg.user .avatar{color:#c7d2fe; background:rgba(59,130,246,.10)}
+    .msg.user .bubble{border-color:rgba(59,130,246,.30); background:rgba(59,130,246,.08)}
+    .msg.assistant .avatar{color:#bbf7d0; background:rgba(34,197,94,.10)}
+    .msg.assistant .bubble{border-color:rgba(34,197,94,.25); background:rgba(34,197,94,.06)}
+    .actions{
+      margin-top:8px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
     }
-
-    main {
-      overflow: auto;
-      padding: 14px;
-      scroll-behavior: smooth;
+    button, select, input, textarea{font:inherit}
+    button{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      transition:transform .05s ease, background .15s ease;
+      font-size:13px;
+      user-select:none;
     }
-    .chat {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    button:hover{background:rgba(255,255,255,.10)}
+    button:active{transform:translateY(1px)}
+    button.primary{background:rgba(59,130,246,.18); border-color:rgba(59,130,246,.35)}
+    button.danger{background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.35)}
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .controls{
+      padding:12px 14px 14px;
+      border-top:1px solid var(--border);
+      background:linear-gradient(to top, rgba(0,0,0,.18), transparent);
     }
-
-    .msg {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 10px;
-      align-items: start;
-    }
-    .avatar {
-      width: 34px; height: 34px;
-      border-radius: 999px;
-      display: grid; place-items: center;
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
-    }
-    .bubble {
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 36, 0.65);
-      border-radius: 14px;
-      padding: 10px 12px;
-      line-height: 1.35;
-      font-size: 14px;
-      color: var(--text);
-      white-space: normal;
-      overflow-wrap: anywhere;
-    }
-
-    .msg.user .avatar { color: #c7d2fe; background: rgba(59,130,246,0.10); }
-    .msg.user .bubble { border-color: rgba(59,130,246,0.30); background: rgba(59,130,246,0.08); }
-
-    .msg.assistant .avatar { color: #bbf7d0; background: rgba(34,197,94,0.10); }
-    .msg.assistant .bubble { border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
-
-    .row-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-
-    button, select, input {
-      font: inherit;
-    }
-
-    button {
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: transform 0.05s ease, background 0.15s ease;
-      font-size: 13px;
-    }
-    button:hover { background: rgba(255,255,255,0.10); }
-    button:active { transform: translateY(1px); }
-    button.primary {
-      background: rgba(59,130,246,0.18);
-      border-color: rgba(59,130,246,0.35);
-    }
-    button.danger {
-      background: rgba(239,68,68,0.10);
-      border-color: rgba(239,68,68,0.35);
-    }
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-
-    .controls {
-      padding: 12px 14px 14px;
-      border-top: 1px solid var(--border);
-      background: linear-gradient(to top, rgba(0,0,0,0.18), transparent);
-    }
-    .controls-grid {
-      display: grid;
+    .controls-grid{
+      display:grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
+      gap:10px;
+      align-items:end;
     }
-
-    .input-wrap {
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 36, 0.65);
-      border-radius: 14px;
-      padding: 10px;
-      display: grid;
+    .input-wrap{
+      border:1px solid var(--border);
+      background:rgba(15,23,36,.65);
+      border-radius:14px;
+      padding:10px;
+      display:grid;
       grid-template-columns: 1fr;
-      gap: 8px;
+      gap:8px;
     }
-
-    textarea {
-      width: 100%;
-      min-height: 52px;
-      max-height: 150px;
-      resize: vertical;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.35;
+    textarea{
+      width:100%;
+      min-height:52px;
+      max-height:160px;
+      resize:vertical;
+      border:none;
+      outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:14px;
+      line-height:1.35;
     }
-
-    .small {
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
+    .row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
     }
-
-    .voice-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+    .leftRow{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .rightRow{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .status{
+      font-size:12px;
+      color:var(--muted);
+      padding:8px 10px;
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius:12px;
+      background:rgba(0,0,0,.10);
+      min-width: 210px;
     }
-
-    select {
-      border: 1px solid var(--border);
-      background: rgba(15, 23, 36, 0.65);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 7px 10px;
-      font-size: 13px;
+    select{
+      border:1px solid var(--border);
+      background:rgba(15,23,36,.65);
+      color:var(--text);
+      border-radius:10px;
+      padding:7px 10px;
+      font-size:13px;
       max-width: 320px;
     }
-
-    .status {
-      font-size: 12px;
-      color: var(--muted);
-      padding: 8px 10px;
-      border: 1px dashed rgba(255,255,255,0.14);
-      border-radius: 12px;
-      background: rgba(0,0,0,0.10);
-    }
-
-    .kbd {
+    label.chk{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+    .kbd{
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.06);
-      color: var(--muted);
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
     }
-
-    @media (max-width: 700px) {
-      .controls-grid { grid-template-columns: 1fr; }
+    @media (max-width: 700px){
+      .controls-grid{grid-template-columns:1fr;}
+      .status{min-width: unset;}
     }
   </style>
 </head>
-
 <body>
   <div class="app">
     <header>
       <div class="left">
         <h1>Voice Chat</h1>
-        <div class="sub">Type or talk → send to <span class="kbd">/api/chat</span> → optionally read aloud</div>
+        <div class="sub">Type or talk → send to <span class="kbd">/api/chat</span> → optional read-aloud on replies</div>
       </div>
       <div class="right">
-        <div class="pill" title="Microphone permission + listening status">
+        <div class="pill" title="Microphone status">
           <span id="micDot" class="dot"></span>
           <span id="micLabel">Mic: idle</span>
         </div>
@@ -290,25 +217,27 @@
         <div class="input-wrap">
           <textarea id="input" placeholder="Type a message… (Enter to send, Shift+Enter for newline)"></textarea>
 
-          <div class="small">
-            <div class="voice-row">
+          <div class="row">
+            <div class="leftRow">
               <button id="btnSend" class="primary" type="button">Send</button>
-              <button id="btnTalk" type="button">🎙️ Talk</button>
-              <button id="btnStopVoice" type="button">🔇 Stop Voice</button>
-              <label style="display:flex;align-items:center;gap:6px;">
-                <input id="chkSpeak" type="checkbox" checked />
-                Speak replies
+              <button id="btnMic" type="button">🎙️ Mic</button>
+              <button id="btnStopVoice" type="button">🔇 Stop</button>
+
+              <!-- Speaks automatically after each assistant reply -->
+              <label class="chk" title="If on, the assistant will speak each reply automatically">
+                <input id="chkAutoSpeak" type="checkbox" checked />
+                Auto-speak replies
               </label>
             </div>
 
-            <div class="voice-row">
-              <span>Voice:</span>
+            <div class="rightRow">
+              <span style="font-size:12px;color:var(--muted)">Voice:</span>
               <select id="voiceSelect"></select>
             </div>
           </div>
         </div>
 
-        <div class="status" id="statusBox">
+        <div class="status">
           Status: <span id="statusText">Ready.</span>
         </div>
       </div>
@@ -316,88 +245,89 @@
   </div>
 
   <script>
-    // ---------- Utilities ----------
-    const $ = (sel) => document.querySelector(sel);
+    // ---------- Helpers ----------
+    const $ = (s) => document.querySelector(s);
+    const history = []; // {role:"user"|"assistant", content:string}
 
-    function escapeHTML(str) {
-      // Prevent XSS when rendering user/assistant text
+    function escapeHTML(str){
       return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
-    function formatMessage(str) {
-      // Escape first, THEN apply lightweight formatting.
-      // Supports **bold** and newlines.
+    function formatMessage(str){
       const safe = escapeHTML(str);
       return safe
         .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
         .replace(/\n/g, "<br>");
     }
 
-    function id() {
-      return (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("msg-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+    function msgId(){
+      return (crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : ("msg-" + Date.now() + "-" + Math.random().toString(16).slice(2));
     }
 
-    function scrollToBottom() {
+    function setStatus(t){ $("#statusText").textContent = t; }
+    function scrollToBottom(){
       const main = $("#main");
       main.scrollTop = main.scrollHeight;
     }
 
-    function setStatus(text) {
-      $("#statusText").textContent = text;
-    }
-
-    // ---------- Speech synthesis ----------
+    // ---------- Speech synthesis (talk back) ----------
     let chosenVoiceName = "";
-    function loadVoices() {
-      const voices = window.speechSynthesis?.getVoices?.() || [];
+
+    function loadVoices(){
+      if (!("speechSynthesis" in window)) return;
+      const voices = window.speechSynthesis.getVoices() || [];
       const sel = $("#voiceSelect");
       sel.innerHTML = "";
 
-      // Prefer US English voices near the top
-      const sorted = [...voices].sort((a, b) => {
-        const aScore = (a.lang?.startsWith("en-US") ? 0 : 1);
-        const bScore = (b.lang?.startsWith("en-US") ? 0 : 1);
-        if (aScore !== bScore) return aScore - bScore;
-        return (a.name || "").localeCompare(b.name || "");
+      const sorted = [...voices].sort((a,b)=>{
+        const aUS = a.lang?.startsWith("en-US") ? 0 : 1;
+        const bUS = b.lang?.startsWith("en-US") ? 0 : 1;
+        if (aUS !== bUS) return aUS - bUS;
+        return (a.name||"").localeCompare(b.name||"");
       });
 
-      for (const v of sorted) {
+      for (const v of sorted){
         const opt = document.createElement("option");
         opt.value = v.name;
         opt.textContent = `${v.name} (${v.lang})`;
         sel.appendChild(opt);
       }
 
-      // Keep selection if possible
-      if (chosenVoiceName && sorted.some(v => v.name === chosenVoiceName)) {
+      if (chosenVoiceName && sorted.some(v => v.name === chosenVoiceName)){
         sel.value = chosenVoiceName;
       } else {
-        // Reasonable default
         const firstUS = sorted.find(v => v.lang?.startsWith("en-US"));
         sel.value = firstUS?.name || sorted[0]?.name || "";
         chosenVoiceName = sel.value;
       }
     }
 
-    function speak(text) {
-      if (!("speechSynthesis" in window)) return;
-      const cleaned = String(text)
+    function cleanForSpeech(text){
+      return String(text || "")
         .replace(/\*\*/g, "")
-        .replace(/INSIGHT:[^\n]+/g, "")
+        .replace(/INSIGHT:[^\n]+/g, "")   // keep on ONE line (no syntax issues)
         .trim();
+    }
 
+    function speak(text){
+      if (!("speechSynthesis" in window)) return;
+      const cleaned = cleanForSpeech(text);
       if (!cleaned) return;
 
+      // Cancel any current speech so it starts cleanly
       window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(cleaned);
 
+      const u = new SpeechSynthesisUtterance(cleaned);
       const voices = window.speechSynthesis.getVoices();
-      const v = voices.find(v => v.name === chosenVoiceName) || voices.find(v => v.lang?.startsWith("en-US")) || voices[0];
+      const v = voices.find(v => v.name === chosenVoiceName)
+                || voices.find(v => v.lang?.startsWith("en-US"))
+                || voices[0];
       if (v) u.voice = v;
 
       u.rate = 1.0;
@@ -406,23 +336,21 @@
       window.speechSynthesis.speak(u);
     }
 
-    function stopSpeak() {
+    function stopSpeak(){
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     }
 
-    // ---------- Speech recognition ----------
+    // ---------- Speech recognition (mic dictation) ----------
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognizer = null;
     let listening = false;
 
-    function setMicUI(isOn, label) {
-      const dot = $("#micDot");
-      const lab = $("#micLabel");
-      dot.classList.toggle("on", !!isOn);
-      lab.textContent = label;
+    function setMicUI(on, label){
+      $("#micDot").classList.toggle("on", !!on);
+      $("#micLabel").textContent = label;
     }
 
-    function initRecognizer() {
+    function initRecognizer(){
       if (!SpeechRecognition) return null;
       const r = new SpeechRecognition();
       r.continuous = false;
@@ -450,17 +378,16 @@
       r.onresult = (event) => {
         let interim = "";
         let finalText = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
+        for (let i = event.resultIndex; i < event.results.length; i++){
           const txt = event.results[i][0].transcript;
           if (event.results[i].isFinal) finalText += txt;
           else interim += txt;
         }
 
-        // Show interim in input (nice UX)
-        if (interim && !finalText) {
+        if (interim && !finalText){
           $("#input").value = interim.trim();
         }
-        if (finalText) {
+        if (finalText){
           $("#input").value = finalText.trim();
           sendMessage($("#input").value);
         }
@@ -469,16 +396,12 @@
       return r;
     }
 
-    // ---------- Chat state ----------
-    const history = []; // { role: "user"|"assistant", content: "..." }
-
-    function addMessage(role, text) {
+    // ---------- Chat UI ----------
+    function addMessage(role, text){
       const chat = $("#chat");
-      const msgId = id();
-
       const wrap = document.createElement("div");
       wrap.className = `msg ${role}`;
-      wrap.id = msgId;
+      wrap.id = msgId();
 
       const av = document.createElement("div");
       av.className = "avatar";
@@ -490,34 +413,47 @@
 
       wrap.appendChild(av);
       wrap.appendChild(bubble);
-      chat.appendChild(wrap);
 
+      // For assistant messages: add a Read Aloud button per message
+      if (role === "assistant"){
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const btnRead = document.createElement("button");
+        btnRead.type = "button";
+        btnRead.textContent = "🔊 Read aloud";
+        btnRead.addEventListener("click", () => speak(text));
+
+        actions.appendChild(btnRead);
+        bubble.appendChild(actions);
+      }
+
+      chat.appendChild(wrap);
       scrollToBottom();
-      return { msgId, bubble };
+      return { wrap, bubble };
     }
 
-    // ---------- Network ----------
-    async function callAPI(userText) {
-      // You can change this if your server expects different fields.
+    // ---------- API ----------
+    async function callAPI(userText){
       const payload = {
         message: userText,
-        history: history.slice(-20) // keep it light
+        history: history.slice(-20)
       };
 
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const t = await res.text().catch(() => "");
+      if (!res.ok){
+        const t = await res.text().catch(()=> "");
         throw new Error(`HTTP ${res.status} ${res.statusText}${t ? " — " + t : ""}`);
       }
 
       const data = await res.json();
-      if (!data || typeof data.text !== "string") {
-        throw new Error("Bad response JSON. Expected { text: string }.");
+      if (!data || typeof data.text !== "string"){
+        throw new Error("Bad JSON response. Expected { text: string }.");
       }
       return data.text;
     }
@@ -525,61 +461,77 @@
     // ---------- Actions ----------
     let busy = false;
 
-    async function sendMessage(text) {
+    async function sendMessage(text){
       const trimmed = String(text || "").trim();
       if (!trimmed || busy) return;
 
       busy = true;
       $("#btnSend").disabled = true;
-      $("#btnTalk").disabled = true;
+      $("#btnMic").disabled = true;
       setStatus("Sending…");
 
       $("#input").value = "";
 
-      // UI + history: user
       addMessage("user", trimmed);
-      history.push({ role: "user", content: trimmed });
+      history.push({ role:"user", content: trimmed });
 
-      // placeholder assistant
       const placeholder = addMessage("assistant", "…");
-      try {
+      try{
         const reply = await callAPI(trimmed);
 
+        // Replace placeholder content (keep Read Aloud button)
         placeholder.bubble.innerHTML = formatMessage(reply);
-        history.push({ role: "assistant", content: reply });
+        const actions = document.createElement("div");
+        actions.className = "actions";
+        const btnRead = document.createElement("button");
+        btnRead.type = "button";
+        btnRead.textContent = "🔊 Read aloud";
+        btnRead.addEventListener("click", () => speak(reply));
+        actions.appendChild(btnRead);
+        placeholder.bubble.appendChild(actions);
 
-        if ($("#chkSpeak").checked) speak(reply);
+        history.push({ role:"assistant", content: reply });
+
+        // Auto-speak (talk back)
+        if ($("#chkAutoSpeak").checked) speak(reply);
+
         setStatus("Ready.");
-      } catch (err) {
+      } catch(err){
         placeholder.bubble.innerHTML = formatMessage("Error: " + (err?.message || String(err)));
         setStatus("Error.");
-      } finally {
+      } finally{
         busy = false;
         $("#btnSend").disabled = false;
-        $("#btnTalk").disabled = false;
+        $("#btnMic").disabled = false;
         scrollToBottom();
       }
     }
 
-    function resetAll() {
+    function resetAll(){
       stopSpeak();
       history.length = 0;
       $("#chat").innerHTML = "";
       $("#input").value = "";
       setStatus("Reset. Ready.");
-      addMessage("assistant", "Hi — type a message or press 🎙️ Talk.");
+      addMessage("assistant", "Hi — type a message, or press 🎙️ Mic to dictate. I can also read replies aloud.");
     }
 
     // ---------- Wire up ----------
-    function begin() {
-      // Voices can load async in some browsers
-      loadVoices();
-      if ("speechSynthesis" in window) {
+    function begin(){
+      // Voices load async in some browsers
+      if ("speechSynthesis" in window){
+        loadVoices();
         window.speechSynthesis.onvoiceschanged = loadVoices;
+      } else {
+        // Hide voice UI if unsupported
+        $("#voiceSelect").innerHTML = "<option>Not supported</option>";
+        $("#chkAutoSpeak").checked = false;
+        $("#chkAutoSpeak").disabled = true;
+        setStatus("SpeechSynthesis not supported in this browser.");
       }
 
       recognizer = initRecognizer();
-      if (!recognizer) {
+      if (!recognizer){
         setMicUI(false, "Mic: not supported");
       } else {
         setMicUI(false, "Mic: idle");
@@ -591,38 +543,40 @@
     $("#btnSend").addEventListener("click", () => sendMessage($("#input").value));
 
     $("#input").addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey){
         e.preventDefault();
         sendMessage($("#input").value);
       }
     });
 
-    $("#btnTalk").addEventListener("click", async () => {
-      if (!recognizer) {
+    $("#btnMic").addEventListener("click", () => {
+      if (!recognizer){
         setStatus("SpeechRecognition not supported in this browser.");
         return;
       }
-      if (listening) {
+      if (listening){
         try { recognizer.stop(); } catch {}
         return;
       }
-      try {
-        // iOS/Safari sometimes needs a user gesture (this click counts)
+      try{
         recognizer.start();
-      } catch (err) {
+      } catch (err){
         setStatus("Could not start mic: " + (err?.message || String(err)));
       }
     });
 
     $("#btnStopVoice").addEventListener("click", stopSpeak);
-
     $("#btnReset").addEventListener("click", resetAll);
 
     $("#voiceSelect").addEventListener("change", (e) => {
       chosenVoiceName = e.target.value;
     });
 
-    // Start
+    // iOS/Safari sometimes needs an interaction before voices populate:
+    document.addEventListener("click", () => {
+      if ("speechSynthesis" in window) loadVoices();
+    }, { once: true });
+
     begin();
   </script>
 </body>
