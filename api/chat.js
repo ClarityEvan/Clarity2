@@ -14,6 +14,13 @@ module.exports = async function handler(req, res) {
   try {
     const { messages, system } = req.body;
 
+    // Check if this looks like a report generation request
+    const lastMsg = messages[messages.length - 1];
+    const isReportRequest = lastMsg && (
+      lastMsg.content.toLowerCase().includes('report') ||
+      lastMsg.content.toLowerCase().includes('json')
+    );
+
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -23,25 +30,30 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+        max_tokens: isReportRequest ? 2000 : 1024,
         system,
         messages
       })
     });
 
     const claudeData = await claudeRes.json();
-    if (!claudeRes.ok) { res.status(claudeRes.status).json({ error: claudeData.error?.message || 'Claude API error' }); return; }
+    if (!claudeRes.ok) {
+      res.status(claudeRes.status).json({ error: claudeData.error?.message || 'Claude API error' });
+      return;
+    }
 
     const text = claudeData.content?.[0]?.text || '';
-
-    // Only generate ElevenLabs audio for conversational responses, not report responses
     const isReport = text.includes('REPORT:');
     let audioBase64 = null;
 
+    // Only generate voice for conversational responses, not reports
     if (!isReport && elevenKey && voiceId) {
       const speakText = text
-        .split('\n').filter(function(l) { return l.indexOf('INSIGHT:') !== 0; }).join('\n')
-        .replace(/\*\*/g, '').trim();
+        .split('\n')
+        .filter(l => l.indexOf('INSIGHT:') !== 0)
+        .join('\n')
+        .replace(/\*\*/g, '')
+        .trim();
 
       if (speakText.length > 0 && speakText.length < 2000) {
         try {
@@ -58,15 +70,15 @@ module.exports = async function handler(req, res) {
             })
           });
           if (elevenRes.ok) {
-            const audioBuffer = await elevenRes.arrayBuffer();
-            audioBase64 = Buffer.from(audioBuffer).toString('base64');
+            const buf = await elevenRes.arrayBuffer();
+            audioBase64 = Buffer.from(buf).toString('base64');
           }
-        } catch(e) {}
+        } catch (e) {}
       }
     }
 
     res.status(200).json({ text, audioBase64 });
-  } catch(e) {
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 }
