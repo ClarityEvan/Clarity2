@@ -9,12 +9,11 @@ module.exports = async function handler(req, res) {
   const elevenKey = process.env.ELEVENLABS_API_KEY;
   const voiceId = process.env.ELEVENLABS_VOICE_ID;
 
-  if (!anthropicKey) { res.status(500).json({ error: 'API key not configured on server.' }); return; }
+  if (!anthropicKey) { res.status(500).json({ error: 'API key not configured.' }); return; }
 
   try {
     const { messages, system } = req.body;
 
-    // Call Claude
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -24,27 +23,27 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
+        max_tokens: 1500,
         system,
         messages
       })
     });
+
     const claudeData = await claudeRes.json();
     if (!claudeRes.ok) { res.status(claudeRes.status).json({ error: claudeData.error?.message || 'Claude API error' }); return; }
 
     const text = claudeData.content?.[0]?.text || '';
 
-    // If ElevenLabs is configured, generate audio
+    // Only generate ElevenLabs audio for conversational responses, not report responses
+    const isReport = text.includes('REPORT:');
     let audioBase64 = null;
-    if (elevenKey && voiceId) {
-      // Strip insight/report blocks from spoken text
-      const speakText = text
-        .replace(/INSIGHT:\{[^}\n]+\}/g, '')
-        .replace(/REPORT:\{[\s\S]+\}$/m, '')
-        .replace(/\*\*/g, '')
-        .trim();
 
-      if (speakText.length > 0 && speakText.length < 3000) {
+    if (!isReport && elevenKey && voiceId) {
+      const speakText = text
+        .split('\n').filter(function(l) { return l.indexOf('INSIGHT:') !== 0; }).join('\n')
+        .replace(/\*\*/g, '').trim();
+
+      if (speakText.length > 0 && speakText.length < 2000) {
         try {
           const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
             method: 'POST',
@@ -62,9 +61,7 @@ module.exports = async function handler(req, res) {
             const audioBuffer = await elevenRes.arrayBuffer();
             audioBase64 = Buffer.from(audioBuffer).toString('base64');
           }
-        } catch(e) {
-          // Audio failed but text is fine - continue without audio
-        }
+        } catch(e) {}
       }
     }
 
