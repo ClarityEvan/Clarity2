@@ -1,562 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Clarity</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root{--cream:#F5F0E8;--dark:#1A1A1A;--gold:#C4A35A;--gold-light:#E8D5A3;--muted:#7A7470;--border:#E0D9CE;--card:#FEFCF8;--white:#fff;--red:#7A2E2E;--green:#2D6A4F;}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;color:var(--dark);}
-.screen{display:none;height:100dvh;flex-direction:column;overflow:hidden;}
-.screen.active{display:flex;}
-#setup{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:32px 28px 32px;background:var(--cream);}
-.wordmark{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;letter-spacing:9px;text-transform:uppercase;margin-bottom:4px;}
-.tagline{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:28px;}
-.s-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:10px;}
-.s-body{font-size:14px;line-height:1.82;color:var(--muted);margin-bottom:24px;}
-.go-btn{display:block;width:100%;padding:18px;margin-top:8px;background:var(--dark);color:var(--cream);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;-webkit-appearance:none;}
-.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
-.what-lbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
-.steps{display:flex;flex-direction:column;gap:14px;}
-.step{display:flex;gap:14px;}
-.sn{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);min-width:20px;line-height:1.1;}
-.st{font-size:13px;line-height:1.78;color:var(--muted);}
-.st b{color:var(--dark);font-weight:500;}
-#chat{background:var(--card);}
-.chat-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;}
-.chat-logo{font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:5px;text-transform:uppercase;}
-.phase-pill{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);background:rgba(196,163,90,0.1);padding:4px 10px;border-radius:20px;border:1px solid var(--gold-light);}
-.msgs{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:22px 18px 10px;display:flex;flex-direction:column;gap:16px;}
-.msg{display:flex;flex-direction:column;gap:4px;animation:fadeUp 0.35s ease forwards;opacity:0;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.msg.ai{align-items:flex-start;}.msg.usr{align-items:flex-end;}
-.msg-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);padding:0 3px;}
-.bubble{max-width:90%;padding:13px 16px;border-radius:8px;line-height:1.78;font-size:15px;}
-.msg.ai .bubble{background:var(--white);border:1px solid var(--border);}
-.msg.usr .bubble{background:var(--dark);color:var(--cream);}
-.mute-btn{background:none;border:1px solid var(--border);border-radius:20px;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:5px 12px;color:var(--muted);margin-top:4px;align-self:flex-start;}
-.typing-wrap{display:flex;flex-direction:column;gap:4px;align-items:flex-start;}
-.typing{display:flex;gap:5px;padding:14px 16px;background:var(--white);border:1px solid var(--border);border-radius:8px;}
-.dot{width:7px;height:7px;background:var(--gold-light);border-radius:50%;animation:bounce 1.3s infinite;}
-.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px);background:var(--gold)}}
-.input-bar{padding:10px 14px;padding-bottom:max(16px,env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--white);flex-shrink:0;}
-.input-row{display:flex;gap:9px;align-items:flex-end;}
-.mic-btn{width:48px;height:48px;flex-shrink:0;border-radius:50%;border:2px solid var(--dark);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;}
-.mic-btn.on{background:var(--dark);}
-.mic-btn.on .mic-svg{stroke:var(--gold);}
-.mic-svg{width:20px;height:20px;stroke:var(--dark);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.txt-input{flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:22px;background:var(--cream);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--dark);outline:none;-webkit-appearance:none;resize:none;max-height:100px;line-height:1.4;}
-.send-btn{width:48px;height:48px;flex-shrink:0;border-radius:50%;background:var(--gold);border:none;color:white;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-appearance:none;}
-.send-btn:disabled{background:var(--border);}
-.voice-hint{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;}
-.report-card{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:20px;margin:8px 0;width:100%;}
-.rep-section{margin-bottom:24px;}
-.rep-lbl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
-.metric{background:var(--white);border:1px solid var(--border);border-radius:6px;padding:14px;}
-.metric-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
-.metric-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;line-height:1;}
-.metric-note{font-size:11px;color:var(--muted);margin-top:3px;}
-.metric.hi .metric-val{color:var(--gold);}
-.metric.good .metric-val{color:var(--green);}
-.metric.warn .metric-val{color:var(--red);}
-.rep-text{font-size:14px;line-height:1.85;color:var(--dark);}
-.rep-items{display:flex;flex-direction:column;gap:8px;}
-.rep-item{display:flex;gap:12px;padding:12px;background:var(--white);border:1px solid var(--border);border-radius:6px;}
-.rep-icon{font-size:18px;flex-shrink:0;}
-.rep-item-title{font-size:13px;font-weight:500;margin-bottom:3px;}
-.rep-item-desc{font-size:12px;color:var(--muted);line-height:1.5;}
-.disclaimer{margin-top:20px;padding:14px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.7;}
-.past-report-item{display:flex;justify-content:space-between;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:14px;}
-.past-report-info{display:flex;flex-direction:column;gap:3px;}
-.past-report-date{font-size:12px;color:var(--dark);font-weight:500;}
-.past-report-summary{font-size:11px;color:var(--muted);}
-.past-report-actions{display:flex;gap:8px;align-items:center;}
-.dl-btn{background:var(--dark);color:var(--cream);border:none;border-radius:4px;padding:6px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
-.del-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-size:13px;cursor:pointer;color:var(--muted);}
-</style>
-</head>
-<body>
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
 
-<div id="setup" class="screen active">
-  <div class="wordmark">Clarity</div>
-  <div class="tagline">Your Financial Future</div>
-  <div class="s-title">Welcome</div>
-  <div class="s-body">Clarity is your personal AI financial advisor. It will ask you about your income, savings, retirement accounts, debts, and goals — then give you a clear, personalized picture of where you stand and what to do next.<br><br>The conversation takes about 15-20 minutes. You can speak your answers or type them. Everything is private and secure.</div>
-  <button class="go-btn" id="go-btn">Begin My Financial Review</button>
-  <div class="divider"></div>
-  <div class="what-lbl">What We Cover</div>
-  <div class="steps">
-    <div class="step"><div class="sn">o</div><div class="st"><b>Income and taxes</b> - salary, bonus, equity, filing status</div></div>
-    <div class="step"><div class="sn">o</div><div class="st"><b>Retirement accounts</b> - 401k, IRA, Roth, employer match</div></div>
-    <div class="step"><div class="sn">o</div><div class="st"><b>Assets and debt</b> - home, investments, savings, loans</div></div>
-    <div class="step"><div class="sn">o</div><div class="st"><b>Protection and goals</b> - insurance, college, retirement timeline</div></div>
-    <div id="past-reports-section" style="display:none;margin-top:8px;">
-    <div class="divider"></div>
-    <div class="what-lbl">Past Reports</div>
-    <div id="past-reports-list" style="display:flex;flex-direction:column;gap:10px;"></div>
-  </div>
-</div>
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const elevenKey = process.env.ELEVENLABS_API_KEY;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID;
 
-<div id="chat" class="screen">
-  <div class="chat-hdr">
-    <div class="chat-logo" id="home-btn" style="cursor:pointer;">Clarity</div>
-    <div style="display:flex;align-items:center;gap:10px;"><div class="phase-pill" id="phase-pill">Getting Started</div><button class="mute-btn" id="mute-btn">&#128266; Sound On</button></div>
-  </div>
-  <div class="msgs" id="msgs"></div>
-  <div class="input-bar">
-    <div class="input-row">
-      <button class="mic-btn" id="mic-btn">
-        <svg class="mic-svg" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-      </button>
-      <textarea class="txt-input" id="txt-input" placeholder="Speak or type..." rows="1"></textarea>
-      <button class="send-btn" id="send-btn">&#8593;</button>
-    </div>
-    <div class="voice-hint" id="voice-hint">Tap the microphone to speak</div>
-  </div>
-</div>
+  if (!anthropicKey) { res.status(500).json({ error: 'API key not configured.' }); return; }
 
-<script>
-(function() {
-  var convHistory = [];
-  var profile = {};
-  var waiting = false;
-  var recog = null;
-  var listening = false;
-  var msgStore = {};
-  var muted = false;
+  try {
+    const { messages, system } = req.body;
 
-  var SYSTEM = "You are Clarity, a warm and highly knowledgeable personal financial advisor AI. Conduct a comprehensive but conversational financial review. Speak like a trusted, brilliant friend. Never use markdown headers or # symbols.\n\nWork through these phases naturally, asking 1-2 questions at a time:\nPHASE 1 - ORIENTATION: Warm greeting. Ask one open question to learn age, marital status, employment, and financial stage.\nPHASE 2 - INCOME AND TAXES: Total compensation, bonus, equity, spouse income, filing status, state.\nPHASE 3 - RETIREMENT: 401k/403b, employer match, contribution level, Roth vs traditional, IRA, total balance.\nPHASE 4 - ASSETS AND DEBT: Home value, mortgage, investment accounts, savings, emergency fund, debts.\nPHASE 5 - PROTECTION: Life and disability insurance, kids, college savings.\nPHASE 6 - GOALS: Target retirement age, Social Security, major expenses, estate planning.\n\nAfter every response where you learn a financial fact, append on its own line:\nINSIGHT:{\"key\":\"value\"}\nUse keys: age, maritalStatus, state, annualIncome, spouseIncome, totalHousehold, retirementBalance, homeValue, mortgageBalance, savingsBalance, totalDebt, retirementSavingsRate, retirementAge, yearsToRetirement, emergencyFundMonths, phase\n\nWhen you have enough info (after phase 6), say you are generating the report then output on its own line:\nREPORT:{\"assessment\":\"2 short paragraphs\",\"projection\":\"1 short paragraph\",\"opportunities\":[{\"icon\":\"emoji\",\"title\":\"short title\",\"desc\":\"one sentence\"}],\"gaps\":[{\"icon\":\"emoji\",\"title\":\"short title\",\"desc\":\"one sentence\"}]}\nKeep opportunities and gaps to 3 items each. Be concise - speed matters.\n\nAfter the REPORT line, add a warm follow-up message saying you are still here for any questions.";
-
-  function init() {
-    document.getElementById('go-btn').addEventListener('click', launch);
-
-    document.getElementById('send-btn').addEventListener('click', send);
-    document.getElementById('mic-btn').addEventListener('click', toggleMic);
-    document.getElementById('txt-input').addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-    });
-    document.getElementById('txt-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-    });
-  }
-
-  function launch() {
-    show('chat');
-    // Attach mute button now that chat screen is visible
-    var muteBtn = document.getElementById('mute-btn');
-    if (muteBtn && !muteBtn._bound) {
-      muteBtn._bound = true;
-      muteBtn.addEventListener('click', function() {
-        muted = !muted;
-        this.innerHTML = muted ? '&#128263; Muted' : '&#128266; Sound On';
-        if (muted && window.currentAudio) { window.currentAudio.pause(); }
-      });
-    }
-    // Home button resets app
-    var homeBtn = document.getElementById('home-btn');
-    if (homeBtn && !homeBtn._bound) {
-      homeBtn._bound = true;
-      homeBtn.addEventListener('click', function() {
-        if (waiting) return;
-        if (!confirm('Start a new session? Your current conversation will be lost.')) return;
-        convHistory = [];
-        profile = {};
-        msgStore = {};
-        muted = false;
-        document.getElementById('msgs').innerHTML = '';
-        document.getElementById('phase-pill').textContent = 'Getting Started';
-        document.getElementById('mute-btn').innerHTML = '&#128266; Sound On';
-        show('setup');
-      });
-    }
-    initSpeech();
-    convHistory.push({ role: 'user', content: 'Hello, I would like a comprehensive review of my financial situation and a personalized report.' });
-    showTyping();
-    callAPI().then(function(r) {
-      hideTyping();
-      if (r) handle(r);
-    });
-  }
-
-  function show(id) {
-    document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-    document.getElementById(id).classList.add('active');
-  }
-
-  function send() {
-    var el = document.getElementById('txt-input');
-    var txt = el.value.trim();
-    if (!txt || waiting) return;
-    el.value = '';
-    el.style.height = '';
-    addMsg('usr', txt);
-    convHistory.push({ role: 'user', content: txt });
-    waiting = true;
-    document.getElementById('send-btn').disabled = true;
-    showTyping();
-    callAPI().then(function(r) {
-      hideTyping();
-      waiting = false;
-      document.getElementById('send-btn').disabled = false;
-      if (r) handle(r);
-    });
-  }
-
-  function callAPI() {
-    return fetch('/api/chat', {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: convHistory, system: SYSTEM })
-    }).then(function(res) {
-      if (!res.ok) {
-        return res.json().then(function(e) {
-          addMsg('ai', 'Error: ' + (e.error || 'Something went wrong.'));
-          return null;
-        });
-      }
-      return res.json().then(function(d) {
-        if (d.audioBase64) playAudio(d.audioBase64);
-        return d.text || null;
-      });
-    }).catch(function(e) {
-      addMsg('ai', 'Connection error: ' + e.message);
-      return null;
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
+        system,
+        messages
+      })
     });
-  }
 
-  function playAudio(base64) {
-    if (muted) return;
-    try {
-      var binary = atob(base64);
-      var bytes = new Uint8Array(binary.length);
-      for (var i = 0; i < binary.length; i++) { bytes[i] = binary.charCodeAt(i); }
-      var blob = new Blob([bytes], { type: 'audio/mpeg' });
-      var audio = new Audio(URL.createObjectURL(blob));
-      window.currentAudio = audio;
-      audio.play().catch(function() {});
-    } catch(e) {}
-  }
+    const claudeData = await claudeRes.json();
+    if (!claudeRes.ok) { res.status(claudeRes.status).json({ error: claudeData.error?.message || 'Claude API error' }); return; }
 
-  function handle(raw) {
-    var insightData = null;
-    var reportData = null;
-    var cleanLines = [];
-    var reportLines = [];
-    var inReport = false;
+    const text = claudeData.content?.[0]?.text || '';
 
-    var lines = raw.split('\n');
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      if (line.indexOf('INSIGHT:') === 0) {
-        try { insightData = JSON.parse(line.substring(8)); } catch(e) {}
-      } else if (line.indexOf('REPORT:') === 0) {
-        inReport = true;
-        reportLines.push(line.substring(7));
-      } else if (inReport) {
-        reportLines.push(line);
-      } else {
-        cleanLines.push(line);
+    // Only generate ElevenLabs audio for conversational responses, not report responses
+    const isReport = text.includes('REPORT:');
+    let audioBase64 = null;
+
+    if (!isReport && elevenKey && voiceId) {
+      const speakText = text
+        .split('\n').filter(function(l) { return l.indexOf('INSIGHT:') !== 0; }).join('\n')
+        .replace(/\*\*/g, '').trim();
+
+      if (speakText.length > 0 && speakText.length < 2000) {
+        try {
+          const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'xi-api-key': elevenKey
+            },
+            body: JSON.stringify({
+              text: speakText,
+              model_id: 'eleven_turbo_v2',
+              voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+            })
+          });
+          if (elevenRes.ok) {
+            const audioBuffer = await elevenRes.arrayBuffer();
+            audioBase64 = Buffer.from(audioBuffer).toString('base64');
+          }
+        } catch(e) {}
       }
     }
 
-    if (insightData) Object.assign(profile, insightData);
-    if (reportLines.length) {
-      try { reportData = JSON.parse(reportLines.join('\n')); } catch(e) {}
-    }
-
-    var text = cleanLines.join('\n').trim();
-    if (text) {
-      addMsg('ai', text);
-      convHistory.push({ role: 'assistant', content: text });
-    }
-
-    if (profile.phase) document.getElementById('phase-pill').textContent = profile.phase;
-
-    if (reportData) {
-      // Show animated report generation indicator
-      showTyping(true);
-      setTimeout(function() { 
-        hideTyping();
-        buildReport(reportData); 
-      }, 800);
-    }
+    res.status(200).json({ text, audioBase64 });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
   }
-
-  function addMsg(role, text) {
-    var area = document.getElementById('msgs');
-    var m = document.createElement('div');
-    m.className = 'msg ' + role;
-    var id = 'msg' + Date.now() + Math.floor(Math.random() * 1000);
-
-    var lbl = document.createElement('div');
-    lbl.className = 'msg-lbl';
-    lbl.textContent = role === 'ai' ? 'Clarity' : 'You';
-
-    var bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.innerHTML = fmt(text);
-
-    m.appendChild(lbl);
-    m.appendChild(bubble);
-
-    if (role === 'ai') {
-      msgStore[id] = text;
-      // no per-message button needed
-    }
-
-    area.appendChild(m);
-    setTimeout(function() { area.scrollTop = area.scrollHeight; }, 50);
-  }
-
-  function speakText(text) {
-    if (!window.speechSynthesis) return;
-    var clean = text.replace(/\*\*/g, '');
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(clean);
-    u.rate = 0.92;
-    window.speechSynthesis.speak(u);
-  }
-
-  function fmt(t) {
-    return t.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-  }
-
-  function showTyping(isReport) {
-    var area = document.getElementById('msgs');
-    var t = document.createElement('div');
-    t.className = 'typing-wrap';
-    t.id = 'typing';
-    if (isReport) {
-      t.innerHTML = '<div class="msg-lbl">Clarity</div><div class="typing" style="flex-direction:column;gap:8px;padding:16px;"><div style="display:flex;gap:5px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div id="report-status" style="font-size:12px;color:var(--muted);letter-spacing:0.5px;">Analyzing your financial picture...</div></div>';
-      area.appendChild(t);
-      setTimeout(function() { area.scrollTop = area.scrollHeight; }, 50);
-      // Cycle through status messages so user knows it's working
-      var messages = [
-        'Analyzing your financial picture...',
-        'Calculating retirement projections...',
-        'Identifying opportunities...',
-        'Reviewing risk gaps...',
-        'Preparing your personalized report...'
-      ];
-      var idx = 0;
-      window.reportStatusTimer = setInterval(function() {
-        idx = (idx + 1) % messages.length;
-        var el = document.getElementById('report-status');
-        if (el) el.textContent = messages[idx];
-      }, 2500);
-    } else {
-      t.innerHTML = '<div class="msg-lbl">Clarity</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-      area.appendChild(t);
-      setTimeout(function() { area.scrollTop = area.scrollHeight; }, 50);
-    }
-  }
-
-  function hideTyping() {
-    if (window.reportStatusTimer) { clearInterval(window.reportStatusTimer); window.reportStatusTimer = null; }
-    var t = document.getElementById('typing');
-    if (t) t.remove();
-  }
-
-  function initSpeech() {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      document.getElementById('voice-hint').textContent = 'Type your answers below';
-      document.getElementById('mic-btn').style.opacity = '0.35';
-      return;
-    }
-    recog = new SR();
-    recog.continuous = false;
-    recog.interimResults = true;
-    recog.lang = 'en-US';
-    recog.onstart = function() {
-      listening = true;
-      document.getElementById('mic-btn').classList.add('on');
-      document.getElementById('voice-hint').textContent = 'Listening... speak now';
-    };
-    recog.onresult = function(e) {
-      var t = Array.from(e.results).map(function(r) { return r[0].transcript; }).join('');
-      document.getElementById('txt-input').value = t;
-    };
-    recog.onend = function() {
-      listening = false;
-      document.getElementById('mic-btn').classList.remove('on');
-      document.getElementById('voice-hint').textContent = 'Tap the microphone to speak';
-      var v = document.getElementById('txt-input').value.trim();
-      if (v) send();
-    };
-    recog.onerror = function() {
-      listening = false;
-      document.getElementById('mic-btn').classList.remove('on');
-    };
-  }
-
-  function toggleMic() {
-    if (!recog) return;
-    if (listening) recog.stop();
-    else { document.getElementById('txt-input').value = ''; recog.start(); }
-  }
-
-  function saveReport(reportHTML, summaryText) {
-    try {
-      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
-      var entry = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
-        summary: summaryText || 'Financial Report',
-        html: reportHTML
-      };
-      reports.unshift(entry);
-      if (reports.length > 10) reports = reports.slice(0, 10); // keep last 10
-      localStorage.setItem('clarity_reports', JSON.stringify(reports));
-      loadPastReports();
-    } catch(e) {}
-  }
-
-  function loadPastReports() {
-    try {
-      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
-      var section = document.getElementById('past-reports-section');
-      var list = document.getElementById('past-reports-list');
-      if (!reports.length) { section.style.display = 'none'; return; }
-      section.style.display = 'block';
-      list.innerHTML = '';
-      for (var i = 0; i < reports.length; i++) {
-        (function(r) {
-          var item = document.createElement('div');
-          item.className = 'past-report-item';
-          item.innerHTML = '<div class="past-report-info"><div class="past-report-date">' + r.date + '</div><div class="past-report-summary">' + r.summary + '</div></div><div class="past-report-actions"><button class="dl-btn">&#11015; PDF</button><button class="del-btn">&#10005;</button></div>';
-          item.querySelector('.dl-btn').addEventListener('click', function() { printReport(r.html, r.date); });
-          item.querySelector('.del-btn').addEventListener('click', function() { deleteReport(r.id); });
-          list.appendChild(item);
-        })(reports[i]);
-      }
-    } catch(e) {}
-  }
-
-  function deleteReport(id) {
-    try {
-      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
-      reports = reports.filter(function(r) { return r.id !== id; });
-      localStorage.setItem('clarity_reports', JSON.stringify(reports));
-      loadPastReports();
-    } catch(e) {}
-  }
-
-  function printReport(html, date) {
-    var win = window.open('', '_blank');
-    win.document.write('<html><head><title>Clarity Report - ' + date + '</title>');
-    win.document.write('<style>body{font-family:Georgia,serif;padding:40px;max-width:700px;margin:0 auto;color:#1A1A1A;} h1{font-size:28px;letter-spacing:6px;text-transform:uppercase;border-bottom:2px solid #C4A35A;padding-bottom:12px;margin-bottom:4px;} .sub{color:#C4A35A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;} .date{font-size:12px;color:#7A7470;margin-bottom:32px;} .rep-lbl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C4A35A;border-bottom:1px solid #E0D9CE;padding-bottom:8px;margin-bottom:14px;margin-top:24px;} .metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;} .metric{border:1px solid #E0D9CE;padding:12px;border-radius:4px;} .metric-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7A7470;margin-bottom:6px;} .metric-val{font-size:22px;color:#C4A35A;} .metric-note{font-size:10px;color:#7A7470;} .rep-text{font-size:13px;line-height:1.8;} .rep-items{display:flex;flex-direction:column;gap:8px;} .rep-item{display:flex;gap:10px;border:1px solid #E0D9CE;padding:10px;border-radius:4px;} .rep-icon{font-size:16px;} .rep-item-title{font-size:13px;font-weight:bold;margin-bottom:2px;} .rep-item-desc{font-size:12px;color:#7A7470;} .disclaimer{font-size:10px;color:#7A7470;border-top:1px solid #E0D9CE;padding-top:12px;margin-top:24px;line-height:1.7;} button{display:none;}</style>');
-    win.document.write('</head><body>');
-    win.document.write('<h1>Clarity</h1><div class="sub">Financial Report</div><div class="date">' + date + '</div>');
-    win.document.write(html);
-    win.document.write('<script>window.onload=function(){window.print();}<\/script>');
-    win.document.write('</body></html>');
-    win.document.close();
-  }
-
-  function downloadPDF() {
-    var reportEl = document.getElementById('report-content');
-    if (!reportEl) { alert('Report not ready yet.'); return; }
-    var win = window.open('', '_blank');
-    win.document.write('<html><head><title>Clarity Financial Report</title>');
-    win.document.write('<style>body{font-family:Georgia,serif;padding:40px;max-width:700px;margin:0 auto;color:#1A1A1A;} h1{font-size:28px;letter-spacing:6px;text-transform:uppercase;border-bottom:2px solid #C4A35A;padding-bottom:12px;margin-bottom:4px;} .sub{color:#C4A35A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;} .section{margin-bottom:28px;} .section-lbl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C4A35A;border-bottom:1px solid #E0D9CE;padding-bottom:8px;margin-bottom:14px;} .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:8px;} .metric{border:1px solid #E0D9CE;padding:12px;border-radius:4px;} .metric-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7A7470;margin-bottom:6px;} .metric-val{font-size:22px;color:#C4A35A;} .text{font-size:13px;line-height:1.8;} .item{display:flex;gap:10px;margin-bottom:10px;border:1px solid #E0D9CE;padding:10px;border-radius:4px;} .item-title{font-size:13px;font-weight:bold;margin-bottom:3px;} .item-desc{font-size:12px;color:#7A7470;} .disclaimer{font-size:10px;color:#7A7470;border-top:1px solid #E0D9CE;padding-top:12px;margin-top:24px;line-height:1.7;} @media print{body{padding:20px;}}</style>');
-    win.document.write('</head><body>');
-    win.document.write('<h1>Clarity</h1><div class="sub">Your Financial Report</div>');
-    win.document.write(reportEl.innerHTML);
-    win.document.write('<script>window.onload=function(){window.print();}<\/script>');
-    win.document.write('</body></html>');
-    win.document.close();
-  }
-
-  function buildReport(data) {
-    var fmtMoney = function(v) {
-      if (!v) return '-';
-      var n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
-      if (isNaN(n)) return String(v);
-      if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
-      if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
-      return '$' + n.toLocaleString();
-    };
-    var toNum = function(v) { return parseFloat(String(v || 0).replace(/[^0-9.]/g, '')) || 0; };
-    var p = profile;
-    var nw = toNum(p.retirementBalance) + toNum(p.homeValue) + toNum(p.savingsBalance) - toNum(p.mortgageBalance) - toNum(p.totalDebt);
-
-    var html = '<div class="report-card" id="report-content">';
-    html += '<div class="rep-section"><div class="rep-lbl">Financial Snapshot</div><div class="metrics-grid">';
-    html += '<div class="metric hi"><div class="metric-lbl">Household Income</div><div class="metric-val">' + fmtMoney(p.totalHousehold || p.annualIncome) + '</div><div class="metric-note">' + (p.state || 'Annual') + '</div></div>';
-    html += '<div class="metric hi"><div class="metric-lbl">Retirement Savings</div><div class="metric-val">' + fmtMoney(p.retirementBalance) + '</div><div class="metric-note">' + (p.retirementSavingsRate ? 'Saving ' + p.retirementSavingsRate + '%' : 'All accounts') + '</div></div>';
-    html += '<div class="metric good"><div class="metric-lbl">Est. Net Worth</div><div class="metric-val">' + (nw > 0 ? fmtMoney(nw) : '-') + '</div><div class="metric-note">Assets minus debts</div></div>';
-    html += '<div class="metric"><div class="metric-lbl">Years to Retire</div><div class="metric-val">' + (p.yearsToRetirement || '-') + '</div><div class="metric-note">' + (p.retirementAge ? 'Target age ' + p.retirementAge : '') + '</div></div>';
-    html += '<div class="metric ' + (toNum(p.totalDebt) > 20000 ? 'warn' : 'good') + '"><div class="metric-lbl">Non-Mortgage Debt</div><div class="metric-val">' + (fmtMoney(p.totalDebt) || '$0') + '</div><div class="metric-note">Loans, cards, other</div></div>';
-    html += '<div class="metric"><div class="metric-lbl">Liquid Savings</div><div class="metric-val">' + fmtMoney(p.savingsBalance) + '</div><div class="metric-note">' + (p.emergencyFundMonths ? p.emergencyFundMonths + ' months' : '') + '</div></div>';
-    html += '</div></div>';
-
-    if (data.assessment) {
-      html += '<div class="rep-section"><div class="rep-lbl">Overall Assessment</div><div class="rep-text">' + data.assessment.replace(/\n/g, '<br>') + '</div></div>';
-    }
-    if (data.projection) {
-      html += '<div class="rep-section"><div class="rep-lbl">Retirement Projection</div><div class="rep-text">' + data.projection.replace(/\n/g, '<br>') + '</div></div>';
-    }
-    if (data.opportunities && data.opportunities.length) {
-      html += '<div class="rep-section"><div class="rep-lbl">Top Opportunities</div><div class="rep-items">';
-      for (var i = 0; i < data.opportunities.length; i++) {
-        var o = data.opportunities[i];
-        html += '<div class="rep-item"><div class="rep-icon">' + (o.icon || '') + '</div><div><div class="rep-item-title">' + o.title + '</div><div class="rep-item-desc">' + o.desc + '</div></div></div>';
-      }
-      html += '</div></div>';
-    }
-    if (data.gaps && data.gaps.length) {
-      html += '<div class="rep-section"><div class="rep-lbl">Risk Gaps</div><div class="rep-items">';
-      for (var j = 0; j < data.gaps.length; j++) {
-        var g = data.gaps[j];
-        html += '<div class="rep-item"><div class="rep-icon">' + (g.icon || '') + '</div><div><div class="rep-item-title">' + g.title + '</div><div class="rep-item-desc">' + g.desc + '</div></div></div>';
-      }
-      html += '</div></div>';
-    }
-    html += '<div class="disclaimer"><b>Disclaimer</b> - This report is generated by AI for informational purposes only. It does not constitute financial, legal, or tax advice. Please consult a licensed financial advisor before making significant financial decisions.</div>';
-    html += '<button onclick="downloadPDF()" style="display:block;width:100%;margin-top:16px;padding:14px;background:var(--dark);color:var(--cream);border:none;border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;">&#11015; Download PDF Report</button>';
-    html += '</div>';
-
-    var area = document.getElementById('msgs');
-    var reportDiv = document.createElement('div');
-    reportDiv.style.cssText = 'width:100%;padding:0;';
-    var lbl = document.createElement('div');
-    lbl.className = 'msg-lbl';
-    lbl.style.marginBottom = '8px';
-    lbl.textContent = 'Your Report';
-    reportDiv.appendChild(lbl);
-    var inner = document.createElement('div');
-    inner.innerHTML = html;
-    reportDiv.appendChild(inner);
-    area.appendChild(reportDiv);
-
-    // Save report to localStorage
-    var summary = (profile.totalHousehold || profile.annualIncome) ? 
-      'Income: ' + (profile.totalHousehold || profile.annualIncome) + (profile.retirementAge ? ' · Retire at ' + profile.retirementAge : '') :
-      'Personal Financial Review';
-    saveReport(inner.innerHTML, summary);
-
-    setTimeout(function() {
-      area.scrollTop = area.scrollHeight;
-      setTimeout(function() {
-        var followUp = "That's your complete financial report. I'm still here if you have any questions about what you see, or want to explore any area in more detail.";
-        addMsg('ai', followUp);
-        convHistory.push({ role: 'assistant', content: followUp });
-      }, 1200);
-    }, 100);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    init();
-    loadPastReports();
-  });
-})();
-</script>
-</body>
-</html>
+}
