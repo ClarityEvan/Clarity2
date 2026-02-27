@@ -71,6 +71,13 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 .rep-item-title{font-size:13px;font-weight:500;margin-bottom:3px;}
 .rep-item-desc{font-size:12px;color:var(--muted);line-height:1.5;}
 .disclaimer{margin-top:20px;padding:14px;background:var(--white);border:1px solid var(--border);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.7;}
+.past-report-item{display:flex;justify-content:space-between;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:6px;padding:14px;}
+.past-report-info{display:flex;flex-direction:column;gap:3px;}
+.past-report-date{font-size:12px;color:var(--dark);font-weight:500;}
+.past-report-summary{font-size:11px;color:var(--muted);}
+.past-report-actions{display:flex;gap:8px;align-items:center;}
+.dl-btn{background:var(--dark);color:var(--cream);border:none;border-radius:4px;padding:6px 12px;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.del-btn{background:none;border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-size:13px;cursor:pointer;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -88,12 +95,16 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
     <div class="step"><div class="sn">o</div><div class="st"><b>Retirement accounts</b> - 401k, IRA, Roth, employer match</div></div>
     <div class="step"><div class="sn">o</div><div class="st"><b>Assets and debt</b> - home, investments, savings, loans</div></div>
     <div class="step"><div class="sn">o</div><div class="st"><b>Protection and goals</b> - insurance, college, retirement timeline</div></div>
+    <div id="past-reports-section" style="display:none;margin-top:8px;">
+    <div class="divider"></div>
+    <div class="what-lbl">Past Reports</div>
+    <div id="past-reports-list" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
 </div>
 
 <div id="chat" class="screen">
   <div class="chat-hdr">
-    <div class="chat-logo">Clarity</div>
+    <div class="chat-logo" id="home-btn" style="cursor:pointer;">Clarity</div>
     <div style="display:flex;align-items:center;gap:10px;"><div class="phase-pill" id="phase-pill">Getting Started</div><button class="mute-btn" id="mute-btn">&#128266; Sound On</button></div>
   </div>
   <div class="msgs" id="msgs"></div>
@@ -145,6 +156,23 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
         muted = !muted;
         this.innerHTML = muted ? '&#128263; Muted' : '&#128266; Sound On';
         if (muted && window.currentAudio) { window.currentAudio.pause(); }
+      });
+    }
+    // Home button resets app
+    var homeBtn = document.getElementById('home-btn');
+    if (homeBtn && !homeBtn._bound) {
+      homeBtn._bound = true;
+      homeBtn.addEventListener('click', function() {
+        if (waiting) return;
+        if (!confirm('Start a new session? Your current conversation will be lost.')) return;
+        convHistory = [];
+        profile = {};
+        msgStore = {};
+        muted = false;
+        document.getElementById('msgs').innerHTML = '';
+        document.getElementById('phase-pill').textContent = 'Getting Started';
+        document.getElementById('mute-btn').innerHTML = '&#128266; Sound On';
+        show('setup');
       });
     }
     initSpeech();
@@ -374,6 +402,64 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
     else { document.getElementById('txt-input').value = ''; recog.start(); }
   }
 
+  function saveReport(reportHTML, summaryText) {
+    try {
+      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
+      var entry = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
+        summary: summaryText || 'Financial Report',
+        html: reportHTML
+      };
+      reports.unshift(entry);
+      if (reports.length > 10) reports = reports.slice(0, 10); // keep last 10
+      localStorage.setItem('clarity_reports', JSON.stringify(reports));
+      loadPastReports();
+    } catch(e) {}
+  }
+
+  function loadPastReports() {
+    try {
+      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
+      var section = document.getElementById('past-reports-section');
+      var list = document.getElementById('past-reports-list');
+      if (!reports.length) { section.style.display = 'none'; return; }
+      section.style.display = 'block';
+      list.innerHTML = '';
+      for (var i = 0; i < reports.length; i++) {
+        (function(r) {
+          var item = document.createElement('div');
+          item.className = 'past-report-item';
+          item.innerHTML = '<div class="past-report-info"><div class="past-report-date">' + r.date + '</div><div class="past-report-summary">' + r.summary + '</div></div><div class="past-report-actions"><button class="dl-btn">&#11015; PDF</button><button class="del-btn">&#10005;</button></div>';
+          item.querySelector('.dl-btn').addEventListener('click', function() { printReport(r.html, r.date); });
+          item.querySelector('.del-btn').addEventListener('click', function() { deleteReport(r.id); });
+          list.appendChild(item);
+        })(reports[i]);
+      }
+    } catch(e) {}
+  }
+
+  function deleteReport(id) {
+    try {
+      var reports = JSON.parse(localStorage.getItem('clarity_reports') || '[]');
+      reports = reports.filter(function(r) { return r.id !== id; });
+      localStorage.setItem('clarity_reports', JSON.stringify(reports));
+      loadPastReports();
+    } catch(e) {}
+  }
+
+  function printReport(html, date) {
+    var win = window.open('', '_blank');
+    win.document.write('<html><head><title>Clarity Report - ' + date + '</title>');
+    win.document.write('<style>body{font-family:Georgia,serif;padding:40px;max-width:700px;margin:0 auto;color:#1A1A1A;} h1{font-size:28px;letter-spacing:6px;text-transform:uppercase;border-bottom:2px solid #C4A35A;padding-bottom:12px;margin-bottom:4px;} .sub{color:#C4A35A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;} .date{font-size:12px;color:#7A7470;margin-bottom:32px;} .rep-lbl{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C4A35A;border-bottom:1px solid #E0D9CE;padding-bottom:8px;margin-bottom:14px;margin-top:24px;} .metrics-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;} .metric{border:1px solid #E0D9CE;padding:12px;border-radius:4px;} .metric-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7A7470;margin-bottom:6px;} .metric-val{font-size:22px;color:#C4A35A;} .metric-note{font-size:10px;color:#7A7470;} .rep-text{font-size:13px;line-height:1.8;} .rep-items{display:flex;flex-direction:column;gap:8px;} .rep-item{display:flex;gap:10px;border:1px solid #E0D9CE;padding:10px;border-radius:4px;} .rep-icon{font-size:16px;} .rep-item-title{font-size:13px;font-weight:bold;margin-bottom:2px;} .rep-item-desc{font-size:12px;color:#7A7470;} .disclaimer{font-size:10px;color:#7A7470;border-top:1px solid #E0D9CE;padding-top:12px;margin-top:24px;line-height:1.7;} button{display:none;}</style>');
+    win.document.write('</head><body>');
+    win.document.write('<h1>Clarity</h1><div class="sub">Financial Report</div><div class="date">' + date + '</div>');
+    win.document.write(html);
+    win.document.write('<script>window.onload=function(){window.print();}<\/script>');
+    win.document.write('</body></html>');
+    win.document.close();
+  }
+
   function downloadPDF() {
     var reportEl = document.getElementById('report-content');
     if (!reportEl) { alert('Report not ready yet.'); return; }
@@ -450,6 +536,12 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
     reportDiv.appendChild(inner);
     area.appendChild(reportDiv);
 
+    // Save report to localStorage
+    var summary = (profile.totalHousehold || profile.annualIncome) ? 
+      'Income: ' + (profile.totalHousehold || profile.annualIncome) + (profile.retirementAge ? ' · Retire at ' + profile.retirementAge : '') :
+      'Personal Financial Review';
+    saveReport(inner.innerHTML, summary);
+
     setTimeout(function() {
       area.scrollTop = area.scrollHeight;
       setTimeout(function() {
@@ -460,7 +552,10 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
     }, 100);
   }
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', function() {
+    init();
+    loadPastReports();
+  });
 })();
 </script>
 </body>
