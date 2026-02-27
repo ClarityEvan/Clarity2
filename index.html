@@ -123,11 +123,7 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 
   function init() {
     document.getElementById('go-btn').addEventListener('click', launch);
-    document.getElementById('mute-btn').addEventListener('click', function() {
-      muted = !muted;
-      this.innerHTML = muted ? '&#128263; Muted' : '&#128266; Sound On';
-      if (muted && window.currentAudio) { window.currentAudio.pause(); }
-    });
+
     document.getElementById('send-btn').addEventListener('click', send);
     document.getElementById('mic-btn').addEventListener('click', toggleMic);
     document.getElementById('txt-input').addEventListener('input', function() {
@@ -141,6 +137,16 @@ body{background:var(--cream);font-family:'DM Sans',sans-serif;font-weight:300;co
 
   function launch() {
     show('chat');
+    // Attach mute button now that chat screen is visible
+    var muteBtn = document.getElementById('mute-btn');
+    if (muteBtn && !muteBtn._bound) {
+      muteBtn._bound = true;
+      muteBtn.addEventListener('click', function() {
+        muted = !muted;
+        this.innerHTML = muted ? '&#128263; Muted' : '&#128266; Sound On';
+        if (muted && window.currentAudio) { window.currentAudio.pause(); }
+      });
+    }
     initSpeech();
     convHistory.push({ role: 'user', content: 'Hello, I would like a comprehensive review of my financial situation and a personalized report.' });
     showTyping();
